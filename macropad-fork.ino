@@ -3,9 +3,6 @@
 #define NUMPIXELS 1
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-int colorUpdate = 0;   //setting a flag to only update colors once when the mode is switched. 
-const int b = 3;       // Brightness control variable. Used to divide the RBG vales set for the RGB LEDs. full range is 0-255. 255 is super bright
-                       // In fact 255 is obnoxiously bright, so this use this variable to reduce the value. It also reduces the current draw on the USB
 
 #include "Keyboard.h"
 
@@ -51,9 +48,12 @@ double analog_ratio = 0;
 // MAIN FUNCTION, WITH CONFIGURATION
 // *********************************
 
+
 void keyEvent(int n, bool pressed) {
   // handles key event at n-th monitored pin
   // 'pressed' == false if released
+
+  
 
 switch (modePushCounter) {                  // switch between keyboard configurations:
     case 0:                      
@@ -200,10 +200,10 @@ switch (modePushCounter) {                  // switch between keyboard configura
   // *** MIDDLE LEFT KEY ***
   if (n == 3) {
     if (pressed) {
-      Keyboard.press(KEY_UP_ARROW);
+      Keyboard.press(KEY_LEFT_ARROW);
     }
     else {
-      Keyboard.release(KEY_UP_ARROW);
+      Keyboard.release(KEY_LEFT_ARROW);
     }
   }
 
@@ -285,7 +285,7 @@ switch (modePushCounter) {                  // switch between keyboard configura
 
 void setup() {
   // initialize monitored pins
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < 10; i++) {
     pinMode(MPINS[i], INPUT_PULLUP);
     last_state[i] = digitalRead(MPINS[i]);
   }
@@ -300,9 +300,30 @@ void setup() {
   Serial.begin(9600); // for debugging only
   Keyboard.begin();
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+
+  pinMode(ModeButton, INPUT_PULLUP);  // initialize the button pin as a input:  
+  Serial.begin(9600); // initialize serial communication:
+
+
 }
 
 void loop() {
+
+buttonState = digitalRead(ModeButton);
+  if (buttonState != lastButtonState) { // compare the buttonState to its previous state
+    if (buttonState == LOW) { // if the state has changed, increment the counter
+      // if the current state is LOW then the button cycled:
+      modePushCounter++;
+      Serial.println("pressed");
+      Serial.print("number of button pushes: ");
+      Serial.println(modePushCounter);
+    } 
+    delay(50); // Delay a little bit to avoid bouncing
+  }
+  lastButtonState = buttonState;  // save the current state as the last state, for next time through the loop
+   if (modePushCounter >1){       //reset the counter after 4 presses CHANGE THIS FOR MORE MODES
+      modePushCounter = 0;}
+  
   // monitor pins
   for (int i = 0; i < 10; i++) {
     if (decay[i] > 0) {
@@ -322,58 +343,18 @@ void loop() {
   // extra delay per run
   delay(DLY);
 
-
-}
-
-void setColorsMode0(){
-  if (colorUpdate == 0){                                           // have the neopixels been updated?
-      for(int i=0;i<NUMPIXELS;i++){      //  Red,Green,Blue                      // pixels.Color takes RGB values; range is (0,0,0) to (255,255,255)
-        pixels.setPixelColor(i, pixels.Color(150,   0,    0));      // Moderately bright red color.
-        pixels.show();                                             // This pushes the updated pixel color to the hardware.
-        delay(50); }                                               // Delay for a period of time (in milliseconds).
-                                               
-      colorUpdate=1;   }                                           // Mark the color flag so neopixels are no longer updated in the loop
-}
-
-void setColorsMode1(){
-  if (colorUpdate == 0){                                     // have the neopixels been updated?
-      pixels.setPixelColor(0,  pixels.Color( 80,  0,200));    //gradient mix
-      pixels.show();
-      colorUpdate=1;              }                           // neoPixels have been updated. 
-                                                              // Set the flag to 1; so they are not updated until a Mode change
-}
-
-void setColorsMode2(){
-  if (colorUpdate == 0){                                      // have the neopixels been updated?
-      pixels.setPixelColor(0, pixels.Color( 51,102,  0));
-      pixels.show(); 
-      colorUpdate=1;                  }      // neoPixels have been updated. 
-                                                            // Set the flag to 1; so they are not updated until a Mode change
-}
-
-void setColorsMode3(){
-  if (colorUpdate == 0){                                     // have the neopixels been updated?
-      pixels.setPixelColor(0, pixels.Color(  0,150,150));   // cyan
-      pixels.show(); 
-      colorUpdate=1;                 }       // neoPixels have been updated. 
-                                                            // Set the flag to 1; so they are not updated until a Mode change
-}
-
-void checkModeButton(){
-  buttonState = digitalRead(ModeButton);
-  if (buttonState != lastButtonState) { // compare the buttonState to its previous state
-    if (buttonState == LOW) { // if the state has changed, increment the counter
-      // if the current state is LOW then the button cycled:
-      modePushCounter++;
-      Serial.println("pressed");
-      Serial.print("number of button pushes: ");
-      Serial.println(modePushCounter);
-      colorUpdate = 0;      // set the color change flag ONLY when we know the mode button has been pressed. 
-                            // Saves processor resources from updating the neoPixel colors all the time
-    } 
-    delay(50); // Delay a little bit to avoid bouncing
-  }
-  lastButtonState = buttonState;  // save the current state as the last state, for next time through the loop
-   if (modePushCounter >1){       //reset the counter after 4 presses CHANGE THIS FOR MORE MODES
-      modePushCounter = 0;}
+ for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
+    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+    // Here we're using a moderately bright green color:
+   switch (modePushCounter) {                  // switch between keyboard configurations:
+    case 0:    
+    pixels.setPixelColor(i, pixels.Color(8,26,150));
+    pixels.show();   // Send the updated pixel colors to the hardware.
+  break;
+   case 1:
+   pixels.setPixelColor(i, pixels.Color(0,150,0));
+   pixels.show();   // Send the updated pixel colors to the hardware.
+   
+   }
+ }
 }
