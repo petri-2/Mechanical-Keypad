@@ -1,17 +1,10 @@
 #include <Adafruit_NeoPixel.h>
 #define PIN        15 
-#define NUMPIXELS 1
+#define NUMPIXELS  1
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 #include "Keyboard.h"
-
-int modePushCounter = 0;       // counter for the number of button presses
-int buttonState = 0;           // current state of the button
-int lastButtonState = 0;       // previous state of the button
-
-const int ModeButton = 5;     // the pin that the Modebutton is attached to
-
 
 // PIN numbers (CONSTANTS)
 const int TLPIN = 14; // top row: left, center right
@@ -21,7 +14,7 @@ const int MLPIN = 9; // middle row: left, center, right
 const int MCPIN = 8;
 const int MRPIN = 7;
 const int BLPIN = 6; // bottom row: left, right
-//const int BRPIN = 5;
+const int ModeButton = 5;     // the pin that the Modebutton is attached to
 const int BNPIN = 4;// rotary encoder: button
 const int RPIN = 2; // rotary encoder: right
 const int LPIN = 3; // rotary encoder: left
@@ -42,7 +35,9 @@ const int DLY = 0; // extra delay per run, in ms (refresh rate)
 const int DCY = 5; // decay per key, in runs (min. DCY*DLY milliseconds)
 int analog_val = 0;
 double analog_ratio = 0;
-
+int modePushCounter = 0;       // counter for the number of button presses
+int buttonState = 0;           // current state of the button
+int lastButtonState = 0;       // previous state of the button
 
 // *********************************
 // MAIN FUNCTION, WITH CONFIGURATION
@@ -52,8 +47,6 @@ double analog_ratio = 0;
 void keyEvent(int n, bool pressed) {
   // handles key event at n-th monitored pin
   // 'pressed' == false if released
-
-  
 
 switch (modePushCounter) {                  // switch between keyboard configurations:
     case 0:                      
@@ -273,15 +266,11 @@ switch (modePushCounter) {                  // switch between keyboard configura
   
   // important: save state
   last_state[n] = !pressed; // pressed==false is HIGH
-  
+}
 }
 
-}
 // ********************
 // END OF MAIN FUNCTION
-
-
-
 
 void setup() {
   // initialize monitored pins
@@ -289,7 +278,9 @@ void setup() {
     pinMode(MPINS[i], INPUT_PULLUP);
     last_state[i] = digitalRead(MPINS[i]);
   }
-
+ // initialize the ModeButton pin as a input:
+  pinMode(ModeButton, INPUT_PULLUP);    
+  
   // initialize other pins and analog in
   for (int i = 0; i < 2; i++) {
     pinMode(OPINS[i], INPUT_PULLUP);
@@ -301,14 +292,9 @@ void setup() {
   Keyboard.begin();
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
 
-  pinMode(ModeButton, INPUT_PULLUP);  // initialize the button pin as a input:  
-  Serial.begin(9600); // initialize serial communication:
-
-
 }
 
 void loop() {
-
 buttonState = digitalRead(ModeButton);
   if (buttonState != lastButtonState) { // compare the buttonState to its previous state
     if (buttonState == LOW) { // if the state has changed, increment the counter
@@ -342,7 +328,8 @@ buttonState = digitalRead(ModeButton);
 
   // extra delay per run
   delay(DLY);
-
+  
+  //status LED colors
  for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
     // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
     // Here we're using a moderately bright green color:
